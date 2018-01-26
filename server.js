@@ -11,6 +11,12 @@ let spotifyApi = new SpotifyWebApi({clientId : clientId,
                                     clientSecret : clientSecret,
                                     refreshToken: refreshToken});
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.get('/api/spotify', function(req, res) {
   console.log(spotifyApi);
   // console.log(`refreshToken is ${refreshToken}`);
