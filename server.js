@@ -141,14 +141,15 @@ app.post('/api/users', (req, res)=>{
           {upsert: true, returnOriginal: false},
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
-            console.log('DOC IS ',doc);
-            if(doc){// user already existed, so just send json with the token
+            const upserted = doc.lastErrorObject.upserted;
+            console.log('DOC IS2 ',doc.lastErrorObject);
+            if(!upserted){// user already existed, so just send json with the token
               const user = doc.value;
               const id = user._id;
               let token = jwt.sign({id: id}, jwtSecret);
               res.status(200).json({user: user, token: token})
-            } else if(!doc){ // user was just created, so invoke Lambda
-              const id = new_user[_id];
+            } else if(upserted){ // user was just created, so invoke Lambda
+              const id = upserted;
               const params = {
                 InvocationType: "RequestResponse",
                 FunctionName: 'user-sign-in', /* required */
