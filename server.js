@@ -41,7 +41,6 @@ let spotifyApi = new SpotifyWebApi({clientId : clientId,
 
 // Mongodb Fields to exclude from when returning user to client
 const fieldsToExclude = {
-  _id: 0,
   access_token: 0,
   refresh_token: 0,
   country: 0,
@@ -157,6 +156,7 @@ app.post('/api/users', (req, res)=>{
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
+
             if(upserted_id){ // user was just created, so invoke Lambda
               const params = {
                 InvocationType: "RequestResponse",
@@ -179,6 +179,9 @@ app.post('/api/users', (req, res)=>{
                     // JWT Token - create a token
                     else {
                       console.log('newUSER IS: ', newUser);
+                      console.log('id is', id);
+                      console.log('newUser._id is', newUser._id);
+
                       let token = jwt.sign({id: id}, jwtSecret);
                       res.json({user: newUser, token: token})
                     }
