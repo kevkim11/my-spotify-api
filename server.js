@@ -142,7 +142,6 @@ app.post('/api/users', (req, res)=>{
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
-
             if(upserted_id){ // user was just created, so invoke Lambda
               const params = {
                 InvocationType: "RequestResponse",
@@ -150,19 +149,23 @@ app.post('/api/users', (req, res)=>{
                 LogType: "Tail",
                 Payload: JSON.stringify({id: upserted_id})
               };
-
               let lambda = new AWS.Lambda();
-              const id = upserted_id;
-              lambda.invoke(params).then(
-                db.collection("user").findOne({"_id": id}, function(err, newUser){
-                  if(err)return console.error(err);
-                  console.log('newUser is', newUser);
-                  // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
-                  // JWT Token - create a token
-                  let token = jwt.sign({id: id}, jwtSecret);
-                  res.json({user: newUser, token: token})
-                })
-              );
+
+              lambda.invoke(params, (err, data)=>{
+                const id = upserted_id;
+                console.log('data', data);
+                if (err) console.log(err, err.stack); // an error occurred
+                if (data.StatusCode===200){
+                  console.log('User.findOne');
+                  db.collection("user").findOne({"_id": id}, function(err, newUser){
+                    if(err)return console.error(err);
+                    // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                    // JWT Token - create a token
+                    let token = jwt.sign({id: id}, jwtSecret);
+                    res.json({user: newUser, token: token})
+                  });
+                }
+              })
             }
             const user = doc.value._id;
             const id = user._id;
