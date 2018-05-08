@@ -3,6 +3,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
+const VerifyToken = require('./auth/VerifyToken.js');
 // const PORT = process.env.PORT || 5000;
 let port = process.env.PORT || 8888;
 
@@ -68,6 +69,15 @@ app.get('/login', function(req, res) { // Spotify Request
   console.log('AUTHORIZE URL= ',spotifyApi.createAuthorizeURL(scopes, state));
   res.redirect(spotifyApi.createAuthorizeURL(scopes, state));
 });
+
+app.get('/api/users', VerifyToken, (req, res) =>{
+  // VERIFY TOKEN
+  const id = req.userId;
+  db.collection("user").findOne({"_id": id}, (err, currentUser)=>{
+    if(err)return console.error(err);
+    res.status(200).json({user: currentUser})
+  })
+})
 
 app.post('/api/users', (req, res)=>{
   const { code, state } = req.query;
