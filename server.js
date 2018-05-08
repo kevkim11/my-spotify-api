@@ -27,6 +27,10 @@ const awsAccessKeyId = process.env["AWS_ACCESS_KEY_ID"];
 const awsSecretAccessKey = process.env["AWS_SECRET_ACCESS_KEY"];
 const region = process.env["AWS_REGION"];
 
+AWS.config.update({accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, region: region});
+/** Generates a random string containing numbers and letters of N characters */
+const generateRandomString = N => (Math.random().toString(36)+Array(N).join('0')).slice(2, N+2);
+
 // let credentials = {clientId : clientId, clientSecret : clientSecret, refreshToken: refreshToken};
 let spotifyApi = new SpotifyWebApi({clientId : clientId,
                                     clientSecret : clientSecret,
