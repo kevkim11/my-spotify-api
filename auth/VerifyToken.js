@@ -20,6 +20,7 @@ function verifyToken(req, res, next) {
     // if everything is good, save to request for use in other routes
     req.userId = decoded.id;
     console.log('the decoded ID is', decoded.id);
+    console.log('the decoded is', decoded);
     next();
   });
 
