@@ -180,28 +180,22 @@ app.post('/api/users', (req, res)=>{
     });
   // }
 });
-if(!upserted_id){// user already existed, so just send json with the token
-  const user = doc.value;
-  const id = user._id;
-  let token = jwt.sign({id: id}, jwtSecret);
-  res.status(200).json({user: user, token: token})
-} else
 
-  app.get('/api/spotify', function(req, res) {
-  console.log(spotifyApi);
-  // console.log(`refreshToken is ${refreshToken}`);
-  // console.log(`CLIENT SECRET is ${clientSecret}`);
-  // console.log(`CLIENT ID is ${clientId}`);
-  spotifyApi.refreshAccessToken()
-    .then(function(data){
-      spotifyApi.setAccessToken(data.body['access_token']);
-    }, function(err) {
-      console.log('Could not refresh access token', err);
-    }).then(function(){
-    let accessToken = spotifyApi.getAccessToken();
-    console.log(`CURRENT ACCESSTOKEN: ${accessToken}`);
-    let refreshToken = spotifyApi.getRefreshToken();
-    console.log(`CURRENT REFRESHTOKEN: ${refreshToken}`);
-    res.json([{accessToken}]);
+app.get('/api/spotify', function(req, res) {
+console.log(spotifyApi);
+// console.log(`refreshToken is ${refreshToken}`);
+// console.log(`CLIENT SECRET is ${clientSecret}`);
+// console.log(`CLIENT ID is ${clientId}`);
+spotifyApi.refreshAccessToken()
+  .then(function(data){
+    spotifyApi.setAccessToken(data.body['access_token']);
+  }, function(err) {
+    console.log('Could not refresh access token', err);
+  }).then(function(){
+  let accessToken = spotifyApi.getAccessToken();
+  console.log(`CURRENT ACCESSTOKEN: ${accessToken}`);
+  let refreshToken = spotifyApi.getRefreshToken();
+  console.log(`CURRENT REFRESHTOKEN: ${refreshToken}`);
+  res.json([{accessToken}]);
   });
 });
