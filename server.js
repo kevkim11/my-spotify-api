@@ -9,6 +9,7 @@ let port = process.env.PORT || 8888;
 
 const MongoClient = require('mongodb').MongoClient;
 const mongoURI = process.env.MONGOURI;
+const mongoDB = process.env.MONGODB;
 
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
@@ -67,7 +68,7 @@ app.use(function(req, res, next) {
 let db;
 MongoClient.connect(mongoURI, function(err, client) {
   if(err)return console.log(err);
-  db = client.db('user_test');
+  db = client.db(mongoDB);
   console.log(`Listening on port ${port}.`);
   app.listen(port, function () {
     console.error(`Node cluster worker: listening on port ${port}`);
