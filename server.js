@@ -77,7 +77,16 @@ app.get('/api/users', VerifyToken, (req, res) =>{
     if(err)return console.error(err);
     res.status(200).json({user: currentUser})
   })
-})
+});
+
+// app.get('/api/playedSongs', VerifyToken, (req, res) =>{
+//   // VERIFY TOKEN
+//   const id = req.userId;
+//   db.collection("user").findOne({"_id": id}, (err, currentUser)=>{
+//     if(err)return console.error(err);
+//     res.status(200).json({user: currentUser})
+//   })
+// });
 
 app.post('/api/users', (req, res)=>{
   const { code, state } = req.query;
@@ -135,8 +144,33 @@ app.post('/api/users', (req, res)=>{
             console.log(doc);
             const user = doc.value;
             const id = user._id;
-            let token = jwt.sign({id: id}, jwtSecret);
-            res.status(200).json({user: user, token: token})
+            // let token = jwt.sign({id: id}, jwtSecret);
+            // res.status(200).json({user: user, token: token})
+
+            const params = {
+              InvocationType: "RequestResponse",
+              FunctionName: 'user-sign-in', /* required */
+              LogType: "Tail",
+              Payload: JSON.stringify({id: id})
+            };
+            let lambda = new AWS.Lambda();
+
+            lambda.invoke(params, (err, data)=>{
+              console.log('data', data);
+              if (err) console.log(err, err.stack); // an error occurred
+              if (data.StatusCode===200){
+                console.log('User.findOne');
+                db.collection("user").findOne({"_id": id}, function(err, result){
+                  if(err)return console.error(err);
+                  if(!result){return res.status(404).json({message: "The user ID cannot be found..."})}
+                  let currentUser = result;
+                  // JWT Token - create a token
+                  let token = jwt.sign({id: id}, jwtSecret);
+                  res.status(200).json({user: currentUser, token: token})
+                });
+              }
+            })
+
           }
         )
       });
