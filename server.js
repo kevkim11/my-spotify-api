@@ -169,11 +169,12 @@ app.post('/api/users', (req, res)=>{
                   });
                 }
               })
-            }
+            } else {
             const user = doc.value;
             const id = user._id;
             let token = jwt.sign({id: id}, jwtSecret);
             res.status(200).json({user: user, token: token})
+            }
           }
         )
       });
