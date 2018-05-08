@@ -124,8 +124,7 @@ app.post('/api/users', (req, res)=>{
         new_user.product = product;
         new_user.type = type;
         new_user.uri = uri;
-        new_user.user_updated_at = new Date(); // TODO Probably need to make the timestamps somewhere else logically
-        new_user.songs_updated_at = new Date();
+        new_user.signed_in_at = new Date(); // Update the user's signed_in_at field here
         return new_user
       }).then(new_user =>{
         // Querying by email / Might change to _id
@@ -133,23 +132,18 @@ app.post('/api/users', (req, res)=>{
         db.collection("user").findOneAndUpdate(
           {email: new_user.email },
           {$set: new_user, $setOnInsert: {
+              user_updated_at: new Date(), // TODO Probably need to make the timestamps somewhere else logically
+              songs_updated_at: new Date(),
               created_at: new Date(),
-              signed_in_at: new Date(),
               played_songs:[],
               previous_last_played: {}
             }},
           {upsert: true, returnOriginal: false},
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
-            const upserted = doc.lastErrorObject.upserted;
-            console.log('DOC IS2 ',doc.lastErrorObject);
-            if(!upserted){// user already existed, so just send json with the token
-              const user = doc.value;
-              const id = user._id;
-              let token = jwt.sign({id: id}, jwtSecret);
-              res.status(200).json({user: user, token: token})
-            } else if(upserted){ // user was just created, so invoke Lambda
-              const id = upserted;
+            const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
+            if(upserted_id){ // user was just created, so invoke Lambda
+              const id = upserted_id;
               const params = {
                 InvocationType: "RequestResponse",
                 FunctionName: 'user-sign-in', /* required */
@@ -173,6 +167,10 @@ app.post('/api/users', (req, res)=>{
                 }
               })
             }
+            const user = doc.value._id;
+            const id = user._id;
+            let token = jwt.sign({id: id}, jwtSecret);
+            res.status(200).json({user: user, token: token})
           }
         )
       });
@@ -182,8 +180,14 @@ app.post('/api/users', (req, res)=>{
     });
   // }
 });
+if(!upserted_id){// user already existed, so just send json with the token
+  const user = doc.value;
+  const id = user._id;
+  let token = jwt.sign({id: id}, jwtSecret);
+  res.status(200).json({user: user, token: token})
+} else
 
-app.get('/api/spotify', function(req, res) {
+  app.get('/api/spotify', function(req, res) {
   console.log(spotifyApi);
   // console.log(`refreshToken is ${refreshToken}`);
   // console.log(`CLIENT SECRET is ${clientSecret}`);
