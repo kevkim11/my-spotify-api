@@ -87,8 +87,9 @@ app.get('/login', function(req, res) { // Spotify Request
 app.get('/api/users', VerifyToken, (req, res) =>{
   // VERIFY TOKEN
   const id = req.userId;
+  console.log('id in app.get(/api/users) = ', id);
   db.collection("user").findOne({"_id": id}, (err, currentUser)=>{
-    if(err)return console.error(err);
+    if(err)return console.error("STUPID ERROR",err);
     res.status(200).json({user: currentUser})
   })
 });
