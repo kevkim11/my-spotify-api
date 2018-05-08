@@ -143,16 +143,16 @@ app.post('/api/users', (req, res)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
             if(upserted_id){ // user was just created, so invoke Lambda
-              const id = upserted_id;
               const params = {
                 InvocationType: "RequestResponse",
                 FunctionName: 'user-sign-in', /* required */
                 LogType: "Tail",
-                Payload: JSON.stringify({id: id})
+                Payload: JSON.stringify({id: upserted_id})
               };
               let lambda = new AWS.Lambda();
 
               lambda.invoke(params, (err, data)=>{
+                const id = upserted_id;
                 console.log('data', data);
                 if (err) console.log(err, err.stack); // an error occurred
                 if (data.StatusCode===200){
@@ -181,21 +181,21 @@ app.post('/api/users', (req, res)=>{
   // }
 });
 
-app.get('/api/spotify', function(req, res) {
-console.log(spotifyApi);
-// console.log(`refreshToken is ${refreshToken}`);
-// console.log(`CLIENT SECRET is ${clientSecret}`);
-// console.log(`CLIENT ID is ${clientId}`);
-spotifyApi.refreshAccessToken()
-  .then(function(data){
-    spotifyApi.setAccessToken(data.body['access_token']);
-  }, function(err) {
-    console.log('Could not refresh access token', err);
-  }).then(function(){
-  let accessToken = spotifyApi.getAccessToken();
-  console.log(`CURRENT ACCESSTOKEN: ${accessToken}`);
-  let refreshToken = spotifyApi.getRefreshToken();
-  console.log(`CURRENT REFRESHTOKEN: ${refreshToken}`);
-  res.json([{accessToken}]);
+  app.get('/api/spotify', function(req, res) {
+  console.log(spotifyApi);
+  // console.log(`refreshToken is ${refreshToken}`);
+  // console.log(`CLIENT SECRET is ${clientSecret}`);
+  // console.log(`CLIENT ID is ${clientId}`);
+  spotifyApi.refreshAccessToken()
+    .then(function(data){
+      spotifyApi.setAccessToken(data.body['access_token']);
+    }, function(err) {
+      console.log('Could not refresh access token', err);
+    }).then(function(){
+    let accessToken = spotifyApi.getAccessToken();
+    console.log(`CURRENT ACCESSTOKEN: ${accessToken}`);
+    let refreshToken = spotifyApi.getRefreshToken();
+    console.log(`CURRENT REFRESHTOKEN: ${refreshToken}`);
+    res.json([{accessToken}]);
   });
 });
