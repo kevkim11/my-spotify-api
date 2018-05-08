@@ -157,6 +157,7 @@ app.post('/api/users', (req, res)=>{
                 if (err) console.log(err, err.stack); // an error occurred
                 if (data.StatusCode===200){
                   console.log('User.findOne');
+                  console.log('id is', id);
                   db.collection("user").findOne({"_id": id}, function(err, newUser){
                     if(err)return console.error(err);
                     // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
