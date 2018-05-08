@@ -45,7 +45,6 @@ const fieldsToExclude = {
   access_token: 0,
   refresh_token: 0,
   country: 0,
-  external_urls: 0,
   followers: 0,
   product: 0,
   type: 0,
