@@ -71,12 +71,12 @@ app.get('/login', function(req, res) { // Spotify Request
 
 app.post('/api/users', (req, res)=>{
   const { code, state } = req.query;
-  const storedState = req.cookies ? req.cookies[STATE_KEY] : null;
-  if (state === null || state !== storedState) {
-    console.log('there was an error, most likely state !== storedState');
-    res.redirect('/#/error/state mismatch');
-    // if the state is valid, get the authorization code and pass it on to the client
-  } else {
+  // const storedState = req.cookies ? req.cookies[STATE_KEY] : null;
+  // if (state === null || state !== storedState) {
+  //   console.log('there was an error, most likely state !== storedState');
+  //   res.redirect('/#/error/state mismatch');
+  //   // if the state is valid, get the authorization code and pass it on to the client
+  // } else {
     res.clearCookie(STATE_KEY);
     let new_user = {}; // init empty new_user
 
@@ -133,7 +133,7 @@ app.post('/api/users', (req, res)=>{
       console.error(err);
       res.redirect('/#/error/invalid token');
     });
-  }
+  // }
 });
 
 app.get('/api/spotify', function(req, res) {
