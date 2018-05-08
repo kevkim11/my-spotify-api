@@ -159,10 +159,10 @@ app.post('/api/users', (req, res)=>{
                   console.log('User.findOne');
                   db.collection("user").findOne({"_id": id}, function(err, newUser){
                     if(err)return console.error(err);
-                    if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                    // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
                     // JWT Token - create a token
                     let token = jwt.sign({id: id}, jwtSecret);
-                    res.status(200).json({user: newUser, token: token})
+                    res.json({user: newUser, token: token})
                   });
                 }
               })
