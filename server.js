@@ -39,6 +39,21 @@ let spotifyApi = new SpotifyWebApi({clientId : clientId,
                                     refreshToken: refreshToken,
                                     redirectUri: redirectUri});
 
+// Mongodb Fields to exclude from when returning user to client
+const fieldsToExclude = {
+  _id: 0,
+  access_token: 0,
+  refresh_token: 0,
+  country: 0,
+  external_urls: 0,
+  followers: 0,
+  product: 0,
+  type: 0,
+  uri: 0,
+  signed_in_at: 0,
+  previous_last_played: 0
+};
+
 // Priority serve any static files.
 app.use(cookieParser())
    .use(bodyParser.json())
@@ -138,7 +153,7 @@ app.post('/api/users', (req, res)=>{
               played_songs:[],
               previous_last_played: {}
             }},
-          {upsert: true, returnOriginal: false},
+          {upsert: true, returnOriginal: false, projection: fieldsToExclude},
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
@@ -158,11 +173,12 @@ app.post('/api/users', (req, res)=>{
                 else {
                   console.log('User.findOne');
                   console.log('id is', id);
-                  db.collection("user").findOne({"_id": id}, function(err, newUser){
+                  db.collection("user").findOne({"_id": id}, {projection: fieldsToExclude} ,function(err, newUser){
                     if(err)return console.error(err);
-                    // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                    if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
                     // JWT Token - create a token
                     else {
+                      console.log('newUSER IS: ', newUser);
                       let token = jwt.sign({id: id}, jwtSecret);
                       res.json({user: newUser, token: token})
                     }
@@ -170,10 +186,11 @@ app.post('/api/users', (req, res)=>{
                 }
               })
             } else {
-            const user = doc.value;
-            const id = user._id;
-            let token = jwt.sign({id: id}, jwtSecret);
-            res.status(200).json({user: user, token: token})
+              const user = doc.value;
+              console.log('USER IS: ', user);
+              const id = user._id;
+              let token = jwt.sign({id: id}, jwtSecret);
+              res.status(200).json({user: user, token: token})
             }
           }
         )
