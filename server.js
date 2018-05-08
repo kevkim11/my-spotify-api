@@ -69,6 +69,73 @@ app.get('/login', function(req, res) { // Spotify Request
   res.redirect(spotifyApi.createAuthorizeURL(scopes, state));
 });
 
+app.post('/api/users', (req, res)=>{
+  const { code, state } = req.query;
+  const storedState = req.cookies ? req.cookies[STATE_KEY] : null;
+  if (state === null || state !== storedState) {
+    console.log('there was an error, most likely state !== storedState');
+    res.redirect('/#/error/state mismatch');
+    // if the state is valid, get the authorization code and pass it on to the client
+  } else {
+    res.clearCookie(STATE_KEY);
+    let new_user = {}; // init empty new_user
+
+    spotifyApi.authorizationCodeGrant(code).then(data => {
+      const { expires_in, access_token, refresh_token } = data.body;
+      console.log('access_token is', access_token);
+      console.log('refresh token is', refresh_token);
+      // Save the refresh_token to the new_user object
+      new_user.access_token = access_token;
+      new_user.refresh_token = refresh_token;
+      // Set the access token on the API object to use it in later calls
+      spotifyApi.setAccessToken(access_token); // use the access token to access the Spotify Web API
+      spotifyApi.setRefreshToken(refresh_token);
+      // Call .getMe() and store in User Collection
+      spotifyApi.getMe().then(({ body }) => {
+        const {id, country, display_name, email, external_urls, followers, href, images, product, type, uri} = body;
+        console.log(body);
+        new_user._id = id;
+        new_user.country = country;
+        new_user.display_name = display_name;
+        new_user.email = email;
+        new_user.external_urls = external_urls;
+        new_user.followers = followers;
+        new_user.href = href;
+        new_user.images = images;
+        new_user.product = product;
+        new_user.type = type;
+        new_user.uri = uri;
+        new_user.user_updated_at = new Date(); // TODO Probably need to make the timestamps somewhere else logically
+        new_user.songs_updated_at = new Date();
+        return new_user
+      }).then(new_user =>{
+        // Querying by email / Might change to _id
+        // 1) Update the user after they login
+        db.collection("user").findOneAndUpdate(
+          {email: new_user.email },
+          {$set: new_user, $setOnInsert: {
+              created_at: new Date(),
+              signed_in_at: new Date(),
+              played_songs:[],
+              previous_last_played: {}
+            }},
+          {upsert: true, returnOriginal: false},
+          (err, doc)=>{
+            if(err){return console.log("There was an error with findOneAndDelete: ", err)}
+            console.log(doc);
+            const id = doc.value._id;
+            let token = jwt.sign({id: id}, jwtSecret);
+            res.status(200).json({user: doc, token: token})
+          }
+        )
+      });
+    }).catch(err => {
+      console.error(err);
+      res.redirect('/#/error/invalid token');
+    });
+  }
+});
+
 app.get('/api/spotify', function(req, res) {
   console.log(spotifyApi);
   // console.log(`refreshToken is ${refreshToken}`);
