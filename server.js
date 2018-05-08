@@ -138,39 +138,39 @@ app.post('/api/users', (req, res)=>{
               played_songs:[],
               previous_last_played: {}
             }},
-          {upsert: true, returnOriginal: false},
+          {upsert: true, returnOriginal: true},
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             console.log(doc);
-            const user = doc.value;
-            const id = user._id;
-            // let token = jwt.sign({id: id}, jwtSecret);
-            // res.status(200).json({user: user, token: token})
+            if(doc){// user already existed, so just send json with the token
+              const user = doc.value;
+              const id = user._id;
+              let token = jwt.sign({id: id}, jwtSecret);
+              res.status(200).json({user: user, token: token})
+            } else if(!doc){ // user was just created, so invoke Lambda
+              const params = {
+                InvocationType: "RequestResponse",
+                FunctionName: 'user-sign-in', /* required */
+                LogType: "Tail",
+                Payload: JSON.stringify({id: id})
+              };
+              let lambda = new AWS.Lambda();
 
-            const params = {
-              InvocationType: "RequestResponse",
-              FunctionName: 'user-sign-in', /* required */
-              LogType: "Tail",
-              Payload: JSON.stringify({id: id})
-            };
-            let lambda = new AWS.Lambda();
-
-            lambda.invoke(params, (err, data)=>{
-              console.log('data', data);
-              if (err) console.log(err, err.stack); // an error occurred
-              if (data.StatusCode===200){
-                console.log('User.findOne');
-                db.collection("user").findOne({"_id": id}, function(err, result){
-                  if(err)return console.error(err);
-                  if(!result){return res.status(404).json({message: "The user ID cannot be found..."})}
-                  let currentUser = result;
-                  // JWT Token - create a token
-                  let token = jwt.sign({id: id}, jwtSecret);
-                  res.status(200).json({user: currentUser, token: token})
-                });
-              }
-            })
-
+              lambda.invoke(params, (err, data)=>{
+                console.log('data', data);
+                if (err) console.log(err, err.stack); // an error occurred
+                if (data.StatusCode===200){
+                  console.log('User.findOne');
+                  db.collection("user").findOne({"_id": id}, function(err, newUser){
+                    if(err)return console.error(err);
+                    if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                    // JWT Token - create a token
+                    let token = jwt.sign({id: id}, jwtSecret);
+                    res.status(200).json({user: newUser, token: token})
+                  });
+                }
+              })
+            }
           }
         )
       });
