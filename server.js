@@ -155,16 +155,24 @@ app.post('/api/users', (req, res)=>{
                 const id = upserted_id;
                 console.log('data', data);
                 if (err) console.log(err, err.stack); // an error occurred
-                if (data.StatusCode===200){
-                  console.log('User.findOne');
-                  db.collection("user").findOne({"_id": id}, function(err, newUser){
-                    if(err)return console.error(err);
-                    // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
-                    // JWT Token - create a token
-                    let token = jwt.sign({id: id}, jwtSecret);
-                    res.json({user: newUser, token: token})
-                  });
-                }
+                console.log('User.findOne');
+                db.collection("user").findOne({"_id": id}, function(err, newUser){
+                  if(err)return console.error(err);
+                  // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                  // JWT Token - create a token
+                  let token = jwt.sign({id: id}, jwtSecret);
+                  res.json({user: newUser, token: token})
+                });
+                // if (data.StatusCode===200){
+                //   console.log('User.findOne');
+                //   db.collection("user").findOne({"_id": id}, function(err, newUser){
+                //     if(err)return console.error(err);
+                //     // if(!newUser){return res.status(404).json({message: "The user ID cannot be found..."})}
+                //     // JWT Token - create a token
+                //     let token = jwt.sign({id: id}, jwtSecret);
+                //     res.json({user: newUser, token: token})
+                //   });
+                // }
               })
             }
             const user = doc.value._id;
