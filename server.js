@@ -138,10 +138,10 @@ app.post('/api/users', (req, res)=>{
               played_songs:[],
               previous_last_played: {}
             }},
-          {upsert: true, returnOriginal: true},
+          {upsert: true, returnOriginal: false},
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
-            console.log(doc);
+            console.log('DOC IS ',doc);
             if(doc){// user already existed, so just send json with the token
               const user = doc.value;
               const id = user._id;
