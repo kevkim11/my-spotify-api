@@ -148,6 +148,7 @@ app.post('/api/users', (req, res)=>{
               let token = jwt.sign({id: id}, jwtSecret);
               res.status(200).json({user: user, token: token})
             } else if(!doc){ // user was just created, so invoke Lambda
+              const id = new_user._id;
               const params = {
                 InvocationType: "RequestResponse",
                 FunctionName: 'user-sign-in', /* required */
