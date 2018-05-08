@@ -63,7 +63,7 @@ MongoClient.connect(mongoURI, function(err, client) {
 // Login using Spotify
 app.get('/login', function(req, res) { // Spotify Request
   const state = generateRandomString(16);
-  const scopes = ['user-read-private', 'user-read-email', 'user-read-recently-played', 'user-top-read'];
+  const scopes = ['user-read-private', 'user-read-email', 'user-read-recently-played'];//, 'user-top-read'
   res.cookie(STATE_KEY, state);
   console.log('AUTHORIZE URL= ',spotifyApi.createAuthorizeURL(scopes, state));
   res.redirect(spotifyApi.createAuthorizeURL(scopes, state));
