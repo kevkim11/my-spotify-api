@@ -15,6 +15,7 @@ const AWS = require('aws-sdk');
 const SpotifyWebApi = require('spotify-web-api-node');
 const app = express();
 // SPOTIFY Secret
+const STATE_KEY = 'spotify_auth_state';
 const clientId = process.env['SPOTIFY_CLIENT_ID'];
 const clientSecret = process.env['SPOTIFY_CLIENT_SECRET'];
 const refreshToken = process.env['SPOTIFY_REFRESH_TOKEN'];
