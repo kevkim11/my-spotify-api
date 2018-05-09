@@ -16,13 +16,7 @@ const AWS = require('aws-sdk');
 
 const SpotifyWebApi = require('spotify-web-api-node');
 const app = express();
-// SPOTIFY Secret
-const STATE_KEY = 'spotify_auth_state';
-const clientId = process.env['SPOTIFY_CLIENT_ID'];
-const clientSecret = process.env['SPOTIFY_CLIENT_SECRET'];
-const refreshToken = process.env['SPOTIFY_REFRESH_TOKEN'];
 
-const redirectUri = process.env['REDIRECT_URI'] || 'http://localhost:3000/callback';
 // JWT Secret
 const jwtSecret = process.env['JWT_SECRET'];
 // AWS Secret
@@ -31,10 +25,16 @@ const awsSecretAccessKey = process.env["AWS_SECRET_ACCESS_KEY"];
 const region = process.env["AWS_REGION"];
 
 AWS.config.update({accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, region: region});
+
 /** Generates a random string containing numbers and letters of N characters */
 const generateRandomString = N => (Math.random().toString(36)+Array(N).join('0')).slice(2, N+2);
+// SPOTIFY Secret
+const STATE_KEY = 'spotify_auth_state';
+const clientId = process.env['SPOTIFY_CLIENT_ID'];
+const clientSecret = process.env['SPOTIFY_CLIENT_SECRET'];
+const refreshToken = process.env['SPOTIFY_REFRESH_TOKEN'];
+const redirectUri = process.env['REDIRECT_URI'] || 'http://localhost:3000/callback';
 
-// let credentials = {clientId : clientId, clientSecret : clientSecret, refreshToken: refreshToken};
 let spotifyApi = new SpotifyWebApi({clientId : clientId,
                                     clientSecret : clientSecret,
                                     refreshToken: refreshToken,
@@ -89,19 +89,10 @@ app.get('/api/users', VerifyToken, (req, res) =>{
   const id = req.userId;
   console.log('id in app.get(/api/users) = ', id);
   db.collection("user").findOne({"_id": id}, (err, currentUser)=>{
-    if(err)return console.error("STUPID ERROR",err);
+    if(err)return console.error("err:",err);
     res.status(200).json({user: currentUser})
   })
 });
-
-// app.get('/api/playedSongs', VerifyToken, (req, res) =>{
-//   // VERIFY TOKEN
-//   const id = req.userId;
-//   db.collection("user").findOne({"_id": id}, (err, currentUser)=>{
-//     if(err)return console.error(err);
-//     res.status(200).json({user: currentUser})
-//   })
-// });
 
 app.post('/api/users', (req, res)=>{
   const { code, state } = req.query;
@@ -147,7 +138,7 @@ app.post('/api/users', (req, res)=>{
         db.collection("user").findOneAndUpdate(
           {email: new_user.email },
           {$set: new_user, $setOnInsert: {
-              user_updated_at: new Date(), // TODO Probably need to make the timestamps somewhere else logically
+              user_updated_at: new Date(),
               songs_updated_at: new Date(),
               created_at: new Date(),
               played_songs:[],
@@ -157,8 +148,8 @@ app.post('/api/users', (req, res)=>{
           (err, doc)=>{
             if(err){return console.log("There was an error with findOneAndDelete: ", err)}
             const upserted_id = doc.lastErrorObject.upserted; // If user was created/upserted, will return doc.lastErrorObject.upserted
-
-            if(upserted_id){ // user was just created, so invoke Lambda
+            // user was just created, so invoke Lambda
+            if(upserted_id){
               const params = {
                 InvocationType: "RequestResponse",
                 FunctionName: 'user-sign-in', /* required */
